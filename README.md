@@ -59,9 +59,12 @@ In order to verify your installation and be able to run the framework with your 
 3. PyTorch (Same as keras).
 
 As Dataset, we provide a small dataset, obtained from [unsplash](https://unsplash.com/images/stock/public-domain). No copyright infingement intended.
+We provide the native TF and TFLite models, obtained from [TensorFlow zoo slim repo](https://github.com/tensorflow/models/tree/master/research/slim/), while the system supports inference and conversion across the pretrained models that are part of the Keras and PyTorch DL frameworks API.
 
 Once you set up the framework, you can execute it by doing:
 `python3 main.py`
+
+The example case will build, run and execute evaluation for `MobileNetV2`, in `TFLite` DL Framework. The evaluation will give an empty devices file, as no simultaneous library runs are performed, and there are no other runs to additional devices.
 
 #### Build: 
 The system will generate the models in the folder defined in config.json, along with their generated Host/Kernel code, but also their TVM Relay IR code:
@@ -98,7 +101,34 @@ The system will then generate the following files:
 `<script_folder>/<generated>/<model>/<device>/<opt_level>/library_evaluation_time_percentage.json` containing percentages of execution time relative change per-prediction across libraries.
 `<script_folder>/<generated>/<model>/<device>/<opt_level>/mutations/same_folder_evaluation.json`, containing the comparison across multiple executions.
 
-Notice that there is a shift across TF/TFLite libraries and Keras/PyTorch. For example, for an image of sorrel, in the case of correct classification, TFLite will give the ImageNet ID:`340`, while the other two libraries, `339`. This was consistent behaviour across library executions, and we considered the offset to our comparisons. If you observe the analysis files, you will see that the comparison output is 100% across all libraries. However this does not apply in the comparison across source and target libraries upon conversion.
+Notice that there is a shift across TF/TFLite libraries and Keras/PyTorch. For example, for an image of drums, in the case of correct classification, TFLite will give the ImageNet ID:`542`, while the other two libraries, `541`. This was consistent behaviour across library executions, and we considered the offset to our comparisons. If you observe the analysis files, you will see that the comparison output is 100% across all libraries. However this does not apply in the comparison across source and target libraries upon conversion.
+
+ To perform a full comparison, set the files to run in structure:
+
+`<optimization>/<device>/<dl_framework>` and then update the `evaluation_out_relative` value of the model to contain the optimization setting under test.
+
+For example, if you have run the experiments for 2 optimizations, 2 devices and 2 libraries with 1 conversion, your structure should be:
+.
+├── Opt0/
+│   ├── Device 1/
+│   │   ├── TF
+│   │   ├── TFLite
+│   │   └── TF-To-TFLite
+│   └── Device 2/
+│       ├── TF
+│       ├── TFLite
+│       └── TF-To-TFLite
+└── Opt2/
+    ├── Device 1/
+    │   ├── TF
+    │   ├── TFLite
+    │   └── TF-To-TFLite
+    └── Device 2/
+        ├── TF
+        ├── TFLite
+        └── TF-To-TFLite
+        
+ And then set `"evaluation_out_relative": <root_folder>/<Opt0/2>`, depending on the optimization setting under analysis.
 
 #### Localize Faults (Alpha version):
 The system includes a mechanism for fault localization. By setting `conv_analysis_enabled=true` in the config.json file, the system will consider two model metadata in order to perform fault localization. For that matter, the system will need (1) the variants of models built on TVM, and (2) inference of images presenting different results across source and target models, in TVM debug mode (having generated debugger "params" metadata). The data required must be provided in the config file.

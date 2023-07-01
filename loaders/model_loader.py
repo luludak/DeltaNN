@@ -69,15 +69,9 @@ class ModelLoader:
         self.lookup_table = {
             "tflite": self.load_tflite_model,
             "keras": self.load_keras_model,
-            # "keras_h5": self.load_keras_h5_model,
-            # "mxnet": self.load_mxnet_model,
             "torch": self.load_torch_model,
             "tf": self.load_tf_model,
             "onnx": self.load_onnx_model_func,
-            # "tf_to_tflite": self.convert_tf_to_tflite_and_load_model,
-            # "torch_to_tflite": self.convert_torch_to_tflite_and_load_model,
-            # "torch_to_tf": self.convert_torch_to_tf_and_load_model,
-            # "torch_to_tf": self.convert_torch_to_tf_and_load_model,
             "noop": self.noop
         }
 
@@ -97,17 +91,16 @@ class ModelLoader:
         return self.lookup_table[data["library"]](data)
 
     def load_tf_model(self, data):
-        # TODO: Implement URL load.
         model_path = data["dll_models_path"] + data["model"]
         onnx_path = self.convert_tf_to_onnx(model_path, data)
         return self.load_onnx_model(onnx_path, data)
 
     def load_onnx_model_func(self, data):
-        # data["dll_models_path"] + data["name"] + "_" + data["library"] + ".onnx"
         return self.load_onnx_model(data["dll_models_path"] + data["model"] , data)
 
-    def load_tflite_model(self, data, keep_dims=False):
-        out_path = data["dll_models_path"] + data["name"] + "_" + data["library"] + ".tflite"
+    def load_tflite_model(self, data, keep_dims=False, use_model_name=True):
+        out_path = data["dll_models_path"] + ((data["name"] + "_" + data["library"] + ".tflite") if not use_model_name \
+            else data["model_name"])
         onnx_path = self.convert_tflite_path_to_onnx(data, source_path=out_path)
         return self.load_onnx_model(onnx_path, data, keep_dims)
 
@@ -151,7 +144,6 @@ class ModelLoader:
             
         onnx_path = self.convert_torch_to_onnx(model, data)
         return self.load_onnx_model(onnx_path, data)
-        # return relay.frontend.from_pytorch(model, (data["input_name"], data["input"]))
 
     def load_onnx_model(self, model_path, data, keep_dims=False, skip_inputs=False):
         print("Model Path: " + model_path)
@@ -162,12 +154,8 @@ class ModelLoader:
         if("tflite" in data["library"] and keep_dims == False):
             di = shape
             shape = (di[0], di[3], di[2], di[1])
-        # shape[0] = "unk__605"
         if(not skip_inputs):
             shape_dict[data["input_name"]] = shape
-            # if "outputs" in data:
-            #     for key in data["outputs"]:
-            #         shape_dict[key] = data["outputs"][key]
             return relay.frontend.from_onnx(model, shape_dict, dtype=data["dtype"], opset=11, freeze_params=True)
         else:
             return relay.frontend.from_onnx(model, dtype=data["dtype"], opset=11, freeze_params=True)
@@ -200,8 +188,7 @@ class ModelLoader:
             input_names = ['inputs:0'],   # the model's input names 
             output_names = ['output'] # the model's output names 
             ),
-            # dynamic_axes = {'inputs:0' : {0 : 1},    # variable length axes 
-                            #'output' : {0 : 1}}
+
         print(onnx_model_path + ": Torch to ONNX Conversion complete!")
         return onnx_model_path
 
@@ -210,11 +197,11 @@ class ModelLoader:
         out_path = data["dll_models_path"] + data["name"] + "_" + data["library"] + ".tflite"
         self.convert_tf_path_to_tflite(path, out_path, data)
         onnx_path = self.convert_tflite_path_to_onnx(data, source_path=out_path)
-        return self.load_tflite_model(data, keep_dims=True)
+        return self.load_tflite_model(data, keep_dims=True, use_model_name=False)
 
     def convert_torch_to_tflite_and_load_model(self, data):
         path = self.convert_torch_to_tflite(data)
-        return self.load_tflite_model(data, keep_dims=True)
+        return self.load_tflite_model(data, keep_dims=True, use_model_name=False)
 
     def convert_torch_to_keras_and_load_model(self, data):
         model = eval(data["model"] + "(pretrained=True)")
@@ -233,14 +220,12 @@ class ModelLoader:
         onnx_keras_path = self.convert_keras_library_to_onnx(data)
         onnx_model = onnx.load(onnx_keras_path)
         torch_model = convert_to_torch(onnx_model)
-        #  data["args_no"] = 263
         torch_onnx_path = self.convert_torch_to_onnx(torch_model, data)
         return self.load_onnx_model(torch_onnx_path, data, skip_inputs=True)
 
     def convert_keras_to_torch_and_load_model(self, data):
         onnx_model = self.load_keras_from_model_path(data["dll_models_path"] + data["name"] + "_" + data["library"], data)
         torch_model = convert_to_torch(onnx_model)
-        #  data["args_no"] = 263
         torch_onnx_path = self.convert_torch_to_onnx(torch_model, data)
         return self.load_onnx_model(torch_onnx_path, data, skip_inputs=True)
 
@@ -258,20 +243,16 @@ class ModelLoader:
         torch_onnx_path = self.convert_torch_to_onnx(torch_model, data)
         return self.load_onnx_model(torch_onnx_path, data, skip_inputs=True)
         
-
-    # TODO: Refactor/test
     def convert_tflite_to_torch_and_load_model(self, data):
         onnx_tflite_path = self.convert_tflite_path_to_onnx(data)
         onnx_model = onnx.load(onnx_tflite_path)
         torch_model = convert_to_torch(onnx_model)
-        #  data["args_no"] = 1
         torch_onnx_path = self.convert_torch_to_onnx(torch_model, data)
         return self.load_onnx_model(torch_onnx_path, data, skip_inputs=True)
 
     def convert_keras_library_to_tf_and_load_model(self, data):
         onnx_keras_path = self.convert_keras_library_to_onnx(data)
         torch_model = self.convert_onnx_to_torch(onnx_keras_path)
-        #  data["args_no"] = 263
         torch_onnx_path = self.convert_torch_to_onnx(torch_model, data)
         tf_onnx_model = self.convert_onnx_to_tf_and_load_via_onnx(torch_onnx_path)
         
@@ -281,8 +262,6 @@ class ModelLoader:
         return self.load_onnx_model(graph_tf_path + ".onnx", data, skip_inputs=True)
 
     def convert_keras_library_to_tflite_and_load_model(self, data):
-        # path = path if path is not None else data["dll_models_path"] + data["model"]
-
         shape = data["input"]
         output = data["output"]
         shape_chopped = shape[1:]
@@ -320,10 +299,7 @@ class ModelLoader:
     def convert_tf_saved_model_path_to_tflite(self, model_path, out_path, data):
          
 
-        converter = tf.compat.v1.lite.TFLiteConverter.from_saved_model(model_path)#, #TensorFlow freezegraph 
-                                                # input_arrays=[data["input_name"].split(":")[0]], # name of input
-                                                # output_arrays=[data["output_name"].split(":")[0]]  # name of output
-                                                # )
+        converter = tf.compat.v1.lite.TFLiteConverter.from_saved_model(model_path)
             
         converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS,
                                             tf.lite.OpsSet.SELECT_TF_OPS]
@@ -364,15 +340,11 @@ class ModelLoader:
 
     def convert_torch_to_tflite(self, data):
         pb_path = self.convert_torch_to_tf(data)
-        # onnx_path = self.convert_torch_to_onnx(model, data)
         return self.convert_tf_saved_model_path_to_tflite(pb_path, pb_path + "/" + data["name"]  + "_torch_to_tflite.tflite", data)
 
 
     def convert_tf_saved_model_to_onnx(self, path, data, export_path="model_to_onnx.onnx"):
 
-        #di = data["input"]
-        #command = 'python3 -m tf2onnx.convert --saved-model "' + path + '" --output "' + export_path + '" --tag "serve" --inputs "' + data["input_name"].split(":")[0] + '[' + str(di[0]) + ',' + str(di[1]) + ',' + str(di[2]) + ',' + str(di[3]) + ']" --outputs "' + data["output_name"].split(":")[0] + '"'
-        
         command = 'python3 -m tf2onnx.convert --opset 9 --saved-model "' + path + '" --output "' + export_path + '"'
         subp.check_call(command, shell=True)
         return export_path
@@ -389,8 +361,6 @@ class ModelLoader:
             + data["output_name"] + '" --output "' + onnx_model_path + '" --inputs-as-nchw "' + \
             str(di[0])  + ' ' + str(di[3])  + ' ' + str(di[2])   + ' ' + str(di[1]) + '"'
             subp.check_call(command, shell=True)
-
-            # subp.check_call(command, shell=True)
             
             print ("Model exported at" + onnx_model_path)
             return onnx_model_path
@@ -484,7 +454,6 @@ class ModelLoader:
 
 
     def convert_onnx_to_tflite(self, onnx_path, data):
-        # output_path = data["dll_models_path"] + data["name"] + "_" + data["library"] + ".tflite"
         output_path = onnx_path.replace(".onnx", ".tflite")
         onnx_converter(onnx_model_path=onnx_path, int8_model=False, output_path=output_path, target_formats=['tflite'], input_node_names=[data["input_name"]], output_node_names=[data["output_name"]])
         return output_path
@@ -492,9 +461,6 @@ class ModelLoader:
     # Generates h5 model in folder with the same name.
     def convert_onnx_to_keras(self, onnx_path, data):
         output_path = onnx_path.replace(".onnx", "")
-        # onnx_model = onnx.load(onnx_path)
-        # keras_model = onnx_to_keras(onnx_model, input_names=[data["input_name"]], input_shapes=data['input'], name_policy='renumerate')
-        # keras_model.save(output_path)
         onnx_converter(onnx_model_path=onnx_path, int8_model=False, output_path=output_path, target_formats=['keras'],  input_node_names=[data["input_name"]], output_node_names=[data["output_name"]])
         return output_path
 
@@ -551,9 +517,6 @@ class ModelLoader:
                 print (dim1)
                 print ("Changed symbolic output dimension to actual for model.")
                 output.type.tensor_type.shape.dim[0].dim_param = "1"
-            # update dim to be a symbolic value
-            #dim1.dim_param = sym_batch_dim
-            # or update it to be an actual value:
             
         
         return model

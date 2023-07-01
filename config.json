@@ -16,12 +16,11 @@
         {
             "name": "MobileNetV2",
             "skip_analysis": false,
-            "build": true,
-            "execute": false,
-            "evaluate": false,
-            "build_dlls": false,
-            "execute_dlls": false,
-            "evaluate_dlls": false,
+            "build": false,
+            "execute": false, 
+            "build_dlls": true,
+            "execute_dlls": true,
+            "evaluate": true,
             "load": "local",
             "url": "torchvision_models.mobilenet_v2",
             "model": "torchvision_models.mobilenet_v2",
@@ -51,11 +50,11 @@
             },
             "ranks_url": "...",
             "paths": {
-                "models_out_relative": "/generated/MobileNet-2-7/models/models/",
+                "models_out_relative": "/generated/MobileNet-2-7/models/",
                 "dll_models_out_relative": "/generated/MobileNet-2-7/models/",
-                "exec_out_relative": "/generated/MobileNet-2-7/conversions/",
+                "exec_out_relative": "/generated/MobileNet-2-7/out/",
                 "dll_exec_out_relative": "/generated/MobileNet-2-7/conversions/",
-                "evaluation_out_relative": "/generated/MobileNet-2-7/conversions/opt2/"
+                "evaluation_out_relative": "/generated/MobileNet-2-7/conversions/"
             },
             "dll_libraries": [
                 {
@@ -63,7 +62,7 @@
                     "load": "local",
                     "dependency": "mobilenet_v2.tflite",
                     "model": "mobilenet_v2.tflite",
-                    "input_name": "input_2",
+                    "input_name": "input",
                     "output_name": "MobilenetV2/Predictions/Reshape_1",
                     "input": [
                         1,
@@ -77,13 +76,13 @@
                     ]
                 }
             ],
-            "dll_libraries1": [
+            "dll_libraries_disabled": [
                 {
                     "library": "tflite",
                     "load": "local",
                     "dependency": "mobilenet_v2.tflite",
                     "model": "mobilenet_v2.tflite",
-                    "input_name": "input_2",
+                    "input_name": "input",
                     "output_name": "MobilenetV2/Predictions/Reshape_1",
                     "input": [
                         1,
@@ -198,7 +197,6 @@
             "build_dlls": false,
             "execute_dlls": false,
             "evaluate": true,
-            "evaluate_dlls": false,
             "load": "local",
             "url": "torchvision_models.resnet101",
             "model": "torchvision_models.resnet101",
@@ -227,11 +225,11 @@
 
             "ranks_url": "...",
             "paths": {
-                "models_out_relative": "/generated/ResNet101/models/models/",
+                "models_out_relative": "/generated/ResNet101/models/",
                 "dll_models_out_relative": "/generated/ResNet101//models/",
-                "exec_out_relative": "/generated/ResNet101/out_large/conversions/",
+                "exec_out_relative": "/generated/ResNet101/out/",
                 "dll_exec_out_relative": "/generated/ResNet101/conversions/",
-                "evaluation_out_relative": "/generated/ResNet101/conversions/opt2/"
+                "evaluation_out_relative": "/generated/ResNet101/conversions/"
             },
             "dll_libraries": [
             {
@@ -546,9 +544,9 @@
             "paths": {
                 "models_out_relative": "/generated/InceptionV3/models/",
                 "dll_models_out_relative": "/generated/InceptionV3/models/",
-                "exec_out_relative": "/generated/InceptionV3/conversions/",
+                "exec_out_relative": "/generated/InceptionV3/out/",
                 "dll_exec_out_relative": "/generated/InceptionV3/conversions/",
-                "evaluation_out_relative": "/generated/InceptionV3/conversions/opt2/"
+                "evaluation_out_relative": "/generated/InceptionV3/conversions/"
             },
             "dll_libraries": [
                 {

@@ -110,7 +110,6 @@ print ("Preprocessing is " + ("enabled." if config["preprocessing_enabled"] else
 
 # Note: This is the raw code of the fault localization analysis.
 # We intend preparing it in full and extend it.
-
 # TODO: Move in separate class.
 #------------------------- Localization Analysis -------------------------
 if(config["conv_analysis_enabled"]):
@@ -504,6 +503,9 @@ for loop_count in range(config["runs_no"]):
                 if("noop" not in dll_lib["library"]):
                     dll_lib["script_dir"] = script_dir
                     dll_lib["name"] = model_info["name"]
+                    
+                    # TODO: Refactor.
+                    dll_lib["model_name"] = dll_lib["dependency"]
                     dll_lib["dtype"] = model_info["dtype"] if "dtype" in model_info else "float32"
                     dll_lib["dll_models_path"] = dll_models_path
 

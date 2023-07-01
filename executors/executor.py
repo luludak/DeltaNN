@@ -30,6 +30,7 @@ class Executor:
     def __init__(self, models_data, images_data, connection_data, extra_folder):
         self.name = models_data["name"]
         self.model_name = models_data["model_name"]
+        self.converted_lib_model_name = models_data["converted_lib_model_name"] if "converted_lib_model_name" in models_data else None
         self.raw_model_name = models_data["raw_model_name"]
         self.input_model_folder = models_data["input_model_folder"]
         self.output_model_folder = models_data["output_model_folder"]
@@ -52,6 +53,8 @@ class Executor:
         self.debug_enabled = models_data["debug_enabled"]
         self.loaded_module = None
         self.json_str = None
+        self.op_type =  models_data["op_type"] if "op_type" in models_data else None
+        self.params = models_data["params"] if "params" in models_data else None
 
         self.same_ranks_threshold = 100
 

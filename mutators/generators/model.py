@@ -21,8 +21,8 @@ def generate_original_model(model, target, params, out_path_relative, file_name=
 
     model_name = file_name if file_name is not None else "model_original"
     model_name = model_name if not quantize else model_name + "_quant" 
-    model_name = model_name if opt_level == 3 else model_name + "_opt" + str(opt_level)
     model_name = model_name + "_opt" + str(opt_level)
+    model_name = model_name + opt_alias
     
     os.makedirs(get_code_dir_path(model_name, out_path_relative), exist_ok=True)
     with tvm.transform.PassContext(opt_level=opt_level, required_pass=required_pass, disabled_pass=disabled_pass):
@@ -37,9 +37,14 @@ def generate_original_model(model, target, params, out_path_relative, file_name=
             print(lib.graph_json, file=outfile)
             outfile.close()
 
+        print(lib.params.keys())
+        output_params_json_file = script_dir + "/../../" + out_path_relative  + "/" + model_name + "_lib_params.params"
+        with open(output_params_json_file, 'wb') as outfile:
+            outfile.write(relay.save_param_dict(lib.params))
+            outfile.close()
+
 
 def generate_model_end_code(lib, model, model_name, out_path_relative):
-    # TODO: Revise this code.
     output_host_file = open(get_code_dir_path(model_name, out_path_relative) + "/output_host.txt",'w')
     output_device_file = open(get_code_dir_path(model_name, out_path_relative) + "/output_device.txt",'w')
     output_relay_file = open(get_code_dir_path(model_name, out_path_relative) + "/output_relay.txt",'w')

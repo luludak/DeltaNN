@@ -19,7 +19,8 @@ class EvaluationGenerator:
         self.evaluator = Evaluator()
         self.exec_log_prefix = exec_log_prefix
         self.evaluate_log_prefix = evaluate_log_prefix
-        
+        self.paths_to_check_threshold = 100
+        self.problematic_occurences_threshold = 90
 
     def count_problematic_occurences(self, original_path, samples_paths):
 
@@ -49,18 +50,17 @@ class EvaluationGenerator:
     def get_time_stats_folder(self, base_folder, base_case=None):
 
         exec_times = []
-        folder_inner  = join(base_folder, [d for d in listdir(base_folder) if isdir(join(base_folder, d))][0], "mutations")
+        folder_inner  = join(base_folder, [d for d in listdir(base_folder) if isdir(join(base_folder, d))][0])
         evaluation_folders = [d for d in listdir(folder_inner) if isdir(join(folder_inner, d))]
         for evaluation_folder in evaluation_folders:
             total_path = join(folder_inner, evaluation_folder)
             comparison_stats = self.get_basic_evaluation(total_path, total_path, total_path, False)
             exec_times.append(comparison_stats["comparison"]["orig_total_exec_time"])
 
-        print(exec_times)
+        print("***** Time Analysis for " + folder_inner + ": *****")
         print("Mean Variance:" + str(float(np.var(exec_times))))
         print("STDev:" + str(float(np.std(exec_times))))
         print("Mean:" + str(float(np.mean(exec_times))))
-        # print("Percentage:" + str(float(np.mean(exec_times))))
         print("Percentage:" + str(float(np.std(exec_times))/float(np.mean(exec_times))))
 
         return self
@@ -68,7 +68,6 @@ class EvaluationGenerator:
     def get_same_folder_comparison(self, base_folder, base_case=None):
 
         evaluation_folders  = [d for d in listdir(base_folder) if isdir(join(base_folder, d))]
-        # print("Evaluating folder " + base_folder + ".")
         if evaluation_folders == None or len(evaluation_folders) == 0:
             return
 
@@ -91,7 +90,6 @@ class EvaluationGenerator:
                 comparison_stats = self.get_basic_evaluation(join(base_folder, base), join(base_folder, evaluated), base_folder, False)
                 if(comparison_stats is None):
                     continue
-                # print(comparison_stats)
                 evaluated_avg_time = comparison_stats["comparison"]["average_exec_time"]
                 evaluated_total_time = comparison_stats["comparison"]["total_exec_time"]
                 images_dissimilar = comparison_stats["comparison"]["images_dissimilar"]
@@ -128,8 +126,6 @@ class EvaluationGenerator:
         
 
     def generate_devices_comparison(self, base_folder, replace_evaluated_suffix=False):
-        # Double loop in devices.
-
         devices = [d for d in listdir(base_folder) if isdir(join(base_folder, d))]
 
         comparisons = {}
@@ -141,7 +137,6 @@ class EvaluationGenerator:
         for base in devices:
 
             libraries = [l for l in listdir(join(base_folder, base)) if isdir(join(base_folder, base, l))]
-            #print(join(base_folder, base))
 
             for library in libraries:
 
@@ -162,14 +157,13 @@ class EvaluationGenerator:
 
                 for evaluated in devices:
 
-                    evaluated_lib_path = join(base_folder, evaluated, library_new)
-                    #print(evaluated_lib_path)
+                    evaluated_lib_path = join(base_folder, evaluated)
+
 
                     if (base == evaluated):
                         continue
 
                     elif (not isdir(join(evaluated_lib_path, "mutations"))):
-                        # print(library)
                         print("Evaluated mutations folder does not exist. Skipping.....")
                         continue
 
@@ -211,7 +205,6 @@ class EvaluationGenerator:
                             "statistic" : stats["statistic"]
                         })
         
-        # print(total_images_dissimilar_across_devices)
         comparisons["total_images_dissimilar"] = total_images_dissimilar_across_devices
 
         output_path_file = base_folder + "/device_evaluation.json"
@@ -254,6 +247,7 @@ class EvaluationGenerator:
             if(not exists(base_mutations)):
                 continue
             
+            # Skip using converted models as base.
             if ("_to_" in base):
                 continue
 
@@ -343,7 +337,6 @@ class EvaluationGenerator:
 
             with open(output_stats_total_csv, 'a', newline='') as file: 
                 writer = csv.DictWriter(file, fieldnames=csv_fields)
-                #writer.writerow(csv_fields)
                 writer.writerows(total_csv_obj)
 
             with open(output_path_file, 'w') as outfile:
@@ -416,7 +409,7 @@ class EvaluationGenerator:
 
         # Check that NN is not "stuck" - producing the same results in every input.
         problematic_occurences = self.count_problematic_occurences(paths_to_check[0], paths_to_check[1:101]) if len(paths_to_check) > 100 else len(paths_to_check)
-        if(len(paths_to_check) > 100 and problematic_occurences > 90):
+        if(len(paths_to_check) > self.paths_to_check_threshold and problematic_occurences > self.problematic_occurences_threshold):
             output_error_file = join(path.dirname(output_path_file), "Error.txt")
             error_text = mutation_model_path + " was found " + str(problematic_occurences) + "% problematic. Skipped generation of evaluation file.\n"
             error_text += mutation_model_path + " was found to have a different number of files by " + str(files_no_diff) + "."
@@ -484,7 +477,6 @@ class EvaluationGenerator:
         div_total_images_no = total_images_no if total_images_no > 0 else 1
 
         diff_labels = dict(sorted(diff_labels.items(), key=lambda item: item[1], reverse=True)[0:max_no_of_diff_labels])
-        # print(diff_labels)
         
         total_diff_label_info = {}
         for key in diff_labels:
@@ -495,7 +487,7 @@ class EvaluationGenerator:
                 "percentage": (different/total_count_of_labels[key])*100
             }
 
-	# Calculate One-way ANOVA for execution time analysis.
+	    # Calculate One-way ANOVA for execution time analysis.
         t_test_result = stats.f_oneway(orig_exec_times, mut_exec_times)        
 
         evaluation_data_obj["comparison"] = {
