@@ -108,6 +108,8 @@ Notice that there is a shift across TF/TFLite libraries and Keras/PyTorch. For e
 `<optimization>/<device>/<dl_framework>` and then update the `evaluation_out_relative` value of the model to contain the optimization setting under test.
 
 For example, if you have run the experiments for 2 optimizations, 2 devices and 2 libraries with 1 conversion, your structure should be:
+
+```
 .
 ├── Opt0/
 │   ├── Device 1/
@@ -127,8 +129,9 @@ For example, if you have run the experiments for 2 optimizations, 2 devices and 
         ├── TF
         ├── TFLite
         └── TF-To-TFLite
+```
         
- And then set `"evaluation_out_relative": <root_folder>/<Opt0/2>`, depending on the optimization setting under analysis.
+And then set `"evaluation_out_relative": <root_folder>/<Opt0/2>`, depending on the optimization setting under analysis.
 
 #### Localize Faults (Alpha version):
 The system includes a mechanism for fault localization. By setting `conv_analysis_enabled=true` in the config.json file, the system will consider two model metadata in order to perform fault localization. For that matter, the system will need (1) the variants of models built on TVM, and (2) inference of images presenting different results across source and target models, in TVM debug mode (having generated debugger "params" metadata). The data required must be provided in the config file.
