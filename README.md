@@ -108,10 +108,10 @@ The system performs layer activations and parameters analysis and comparison, an
 Note that this version of the system needs refactoring, and is in alpha version.
 
 
-##### Errors:
+#### Errors:
 In case of an error, the suite will generate a `<script_folder>/error_log/<model>/ts_<epoch_time_of_problematic_run>/error_log.txt` file containing all related info.
 
-##### Alpha Features:
+#### Alpha Features:
 Inside `main.py`, you will also find the alpha version of specific features, such as:
 - Neural Network layers activation localization (Pre-Alpha Version).
 - Plot Generation for execution times across devices, DL Frameworks, as well as comparisons of output predictions for DL Frameworks (Alpha Version).
