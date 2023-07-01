@@ -17,7 +17,6 @@ from processors.model_preprocessor import ModelPreprocessor
 
 from tvm.contrib.debugger.debug_executor import GraphModuleDebug
 
-# TODO: Refactor
 from tensorflow import keras
 from keras import backend as K
 from keras.models import load_model
@@ -32,8 +31,6 @@ class Executor:
         self.name = models_data["name"]
         self.model_name = models_data["model_name"]
         self.raw_model_name = models_data["raw_model_name"]
-        #self.dependency = models_data["dependency"]
-        #self.model = models_data["model"]
         self.input_model_folder = models_data["input_model_folder"]
         self.output_model_folder = models_data["output_model_folder"]
         self.mutations_names = models_data["mutations_names"]
@@ -43,7 +40,6 @@ class Executor:
         self.output = models_data["output"]
         self.output_name = models_data["output_name"]
         self.library = models_data["library"] if "library" in models_data else None
-        # self.dll_libs = models_data["dll_libs"] if "dll_libs" in models_data else None
         self.input_images_folders = images_data["input_images_folders"]
         self.output_images_base_folder = images_data["output_images_base_folder"]
         self.extra_folder = extra_folder
@@ -56,6 +52,8 @@ class Executor:
         self.debug_enabled = models_data["debug_enabled"]
         self.loaded_module = None
         self.json_str = None
+
+        self.same_ranks_threshold = 100
 
     def prepare(self, variant, remote = None):
 
@@ -105,6 +103,7 @@ class Executor:
     def get_last_folder(self, folder_path):
         return os.path.basename(os.path.normpath(folder_path))
 
+
     def process_library_images_with_io(self, input_folder, output_folder):
         os.makedirs(output_folder, exist_ok=True)
 
@@ -145,7 +144,7 @@ class Executor:
 
             img = Image.open(img_path)
             # Convert monochrome to RGB
-            if(img.mode == "L"):
+            if(img.mode == "L" or img.mode == "BGR"):
                 img = img.convert("RGB")
 
             img = img.resize(self.image_dimension)
@@ -156,41 +155,34 @@ class Executor:
             output_file_path = output_folder + "/" + image_name_extracted.replace(".", "_") + ".txt"
 
             try:
-
-                # Library execution decision
+                
                 output = None
                 if(self.library == "onnx"):
                     ort_sess = ort.InferenceSession(join(self.input_model_folder, self.model_name), providers=['CPUExecutionProvider'])
-                    start_timestamp = self.get_epoch_timestamp(False)
-                    output = ort_sess.run(None, {'input': img})
-                    end_timestamp = self.get_epoch_timestamp(False)
-                elif(self.library == "torch"):
+                    output = ort_sess.run(None, {self.input_name : img})
+
+                elif(self.library.startswith("torch")):
                     
+                    if(not self.library.endswith("library")):
+                        model = torch.load(self.model_path)
 
                     model_to_execute = eval(self.model_name + "(pretrained=True)")
                     model_to_execute.eval()
-
-                    # TODO: In case of the need of accurate performance measurement,
-                    # this needs to be rewritten.
-                    start_timestamp = self.get_epoch_timestamp(False)
                     output = model_to_execute(torch.from_numpy(img)).detach().numpy()
-                    end_timestamp = self.get_epoch_timestamp(False)
 
-                elif(self.library == "keras"):
-                    
+                elif(self.library.startswith("keras")):
+
+                    if(not self.library.endswith("library")):
+                        model_to_execute = tf.keras.models.load_model(self.model_path)
+                    else:
+                        model_to_execute = eval(self.raw_model_name + "(include_top=True, weights=\"imagenet\", input_shape=None, classes=" + str(self.output[1])  + ")")
                     with tf.Graph().as_default():
                         with tf.Session() as sess:
                             K.set_session(sess)
 
-                            model_to_execute = eval(self.raw_model_name + "(include_top=True, weights=\"imagenet\", input_shape=None, classes=" + str(self.output[1])  + ")")
-
-                            start_timestamp = self.get_epoch_timestamp(False)
                             output = model_to_execute.predict(img)
-                            end_timestamp = self.get_epoch_timestamp(False)
 
-                elif(self.library == "tf"): #Loading TF from file
-                    # Transpose dimensions
-                    #img = np.transpose(img, (0, 2, 3, 1))
+                elif(self.library == "tf" or self.library == "tensorflow"):
                     model_path = join(self.input_model_folder, self.model_name)
                     with tf.Graph().as_default() as graph:
                         with tf.compat.v1.Session() as sess:
@@ -205,38 +197,15 @@ class Executor:
                                 l_input = graph.get_tensor_by_name(self.input_name)
                                 tf.global_variables_initializer()
 
-                                start_timestamp = self.get_epoch_timestamp(False)
                                 output = sess.run(l_output, feed_dict = {l_input : img})
-                                end_timestamp = self.get_epoch_timestamp(False)
 
-                    # with tf.Graph().as_default():
+                elif(self.library == "tflite"):
 
-                    #     with tf.Session() as sess:
-
-                    #         K.set_session(sess)
-                    #         model_path = join(self.input_model_folder, model_name)
-                    #         model_to_execute = load_model(model_path)
-                    #         output = model_to_execute.predict(img)
-
-                elif(self.library == "tflite" or "to_tflite" in self.library):
-
-                    if(self.library == "tf_to_tflite"):
-                        model_name = self.model_name.replace(".pb", "_" + self.library + ".tflite")
-                        model_path = join(self.input_model_folder, model_name)
-
-                    elif(self.library == "torch_to_tflite"):
-                        model_name = self.name + "_torch_to_tflite.tflite"
-                        model_path = join(self.input_model_folder + "/" + self.name + "_torch_to_tflite" , model_name)
-
-                    else:
-                        model_path = join(self.input_model_folder, self.model_name)
-                        # Transpose dimensions
-                        img = np.transpose(img, (0, 2, 3, 1))
-
-                        # Normalize between 0 and 1.
-                        img = tf.divide(img, tf.reduce_max(img))
-                        
-
+                    model_path = join(self.input_model_folder, self.model_name)
+                    # Transpose dimensions
+                    img = np.transpose(img, (0, 2, 3, 1))
+                    # Normalize between 0 and 1.
+                    img = tf.divide(img, tf.reduce_max(img))
 
                     interpreter = tf.lite.Interpreter(model_path=model_path)
                     interpreter.allocate_tensors()
@@ -246,25 +215,14 @@ class Executor:
                     output_details = interpreter.get_output_details()
 
                     # Test the model on random input data.
-
                     input_data = np.array(img, dtype=np.float32)
 
-                    start_timestamp = self.get_epoch_timestamp(False)
                     interpreter.set_tensor(input_details[0]['index'], input_data)
                     interpreter.invoke()
 
-                    # The function `get_tensor()` returns a copy of the tensor data.
-                    # Use `tensor()` in order to get a pointer to the tensor.
                     output = interpreter.get_tensor(output_details[0]['index'])
-                    end_timestamp = self.get_epoch_timestamp(False)
 
-
-                    # TODO: Convert output to array to be used by softmax
-
-
-                # if (output is None):
-                #     raise Exception("Library not handled!")
-
+                # Score process.
                 scores = softmax(output)
                 if(len(scores) > 2):
                     squeeze(scores, [0, 2])
@@ -278,14 +236,11 @@ class Executor:
                     prev_ranks = extracted_ranks
                     same_ranks = 0
 
-                if(same_ranks == 100):
+                if(same_ranks == self.same_ranks_threshold):
                     print ("Warning: Execution produced same ranks for 100 consecutive inputs. Stopped.")
                     return self
 
-                # end_timestamp = self.get_epoch_timestamp(False)
-
                 with open(output_file_path, 'w') as output_file:
-                    # TOP-K of ranks, with K=5.
                     for rank in extracted_ranks:
                         print("%s, %f" % (rank, scores[rank]), file = output_file)
                     
@@ -293,15 +248,8 @@ class Executor:
                     output_file.close()
                     
             except Exception as e:
+                start_timestamp = self.get_epoch_timestamp(False)
                 ts_floor = str(math.floor(start_timestamp))
-                errors_no += 1
-                if(not error_occured):
-                        error_occured = True
-                        print("One or more image errors have occured. See execution log of the model for details (ts: " + ts_floor + ").")
-                
-                if(errors_no == 100):
-                    print ("100 Errors have occured. Stopping execution.")
-                    return
 
                 folder_to_write = join(self.error_base_folder, ts_floor)
                 os.makedirs(folder_to_write, exist_ok=True)
@@ -311,6 +259,7 @@ class Executor:
                 f.close()
 
         return self
+
 
     def reset_module(self, variant):
             
@@ -340,7 +289,6 @@ class Executor:
         same_ranks = 0
         prev_ranks = None
 
-        # TODO: replace with self.input
         input_shape_inferred = self.module.get_input(0).shape
 
         data = {
@@ -364,7 +312,6 @@ class Executor:
             img_path = input_folder + "/" + image_name
            
             img = Image.open(img_path)
-            # Convert monochrome to RGB
             if(img.mode == "L"):
                 img = img.convert("RGB")
 
@@ -378,7 +325,6 @@ class Executor:
             try:
                 start_timestamp = self.get_epoch_timestamp(False)
 
-                # img = img.resize(self.image_dimension)
                 self.module.set_input(self.input_name, img)
                 self.module.run()
                 
@@ -441,6 +387,3 @@ class Executor:
     def get_epoch_timestamp(self, use_floor = True):
         time_to_return = time.time()
         return math.floor(time_to_return) if use_floor else time_to_return
-
-    
-
