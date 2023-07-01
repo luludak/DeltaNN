@@ -44,7 +44,6 @@ class ModelPreprocessor:
         
             return img_data
 
-
         # If a library conversion is invoked, take the original preprocessing.
         # These libraries have the format of tf_to_keras
         # so I isolate "tf" and then I select preprocessing based on that.
@@ -66,7 +65,6 @@ class ModelPreprocessor:
         
             if (self.data["input"][1] == 3 and img_data.shape[1] != 3 or (self.data["input"][1] != 3  and img_data.shape[1] == 3)):
                 return np.transpose(img_data, (0, 3, 1, 2))
-
 
             return img_data
 
