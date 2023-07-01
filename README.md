@@ -54,9 +54,9 @@ https://tvm.apache.org/docs/tutorial/cross_compilation_and_rpc.html).
 
 ## Example
 In order to verify your installation and be able to run the framework with your own configuration, we have setup the configuration to build the system utilizing 3 libraries:
-1. TFLite (Downloaded an included from the TF repo aforementioned)
-2. Keras (Using pre-built library of keras)
-3. PyTorch (Same as keras)
+1. TFLite (Downloaded an included from the TF repo aforementioned).
+2. Keras (Using pre-built library of keras).
+3. PyTorch (Same as keras).
 
 As Dataset, we provide a small dataset, obtained from [unsplash](https://unsplash.com/images/stock/public-domain). No copyright infingement intended.
 
@@ -88,9 +88,9 @@ Console will indicate the status of the running model and update accordingly.
 
 #### Analyze:
 Once execution is complete, analysis will be executed. This will be done in 3 ways:
-- Comparing results per-device (if provided)
-- Comparing results per-library(if provided)
-- Comparing results per-multiple executions (if provided)
+- Comparing results per-device (if provided).
+- Comparing results per-library(if provided).
+- Comparing results per-multiple executions (if provided).
 
 The system will then generate the following files:
 `<script_folder>/<generated>/<model>/<device>/device_evaluation.json` containing results per-device comparison in a N-N manner.
