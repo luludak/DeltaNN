@@ -102,16 +102,16 @@ In our example, all 3 MobileNetV2 libraries will give the same first prediction 
 Notice that TFLite will give the ImageNet ID:`340`, while the other two libraries, `339`. This was consistent behaviour across library executions, and we considered the offset to our comparisons. If you observe the analysis files, you will see that the comparison output is 100% across all libraries. However this does not apply in the comparison across source and target libraries upon conversion.
 
 #### Localize Faults (Alpha version):
-The system includes a mechanism for fault localization. By setting `conv_analysis_enabled=true` in the config.json file, the system will consider two model metadata in order to perform fault localization. For that matter, the system will need 1) the variants of models built on TVM, and 2) inference of images presenting different results across source and target models, in TVM debug mode (having generated debugger "params" metadata). The data required must be provided in the config file.
+The system includes a mechanism for fault localization. By setting `conv_analysis_enabled=true` in the config.json file, the system will consider two model metadata in order to perform fault localization. For that matter, the system will need (1) the variants of models built on TVM, and (2) inference of images presenting different results across source and target models, in TVM debug mode (having generated debugger "params" metadata). The data required must be provided in the config file.
 
 The system performs layer activations and parameters analysis and comparison, and generates plots with the respective data.
 Note that this version of the system needs refactoring, and is in alpha version.
 
 
-###### Errors:
+##### Errors:
 In case of an error, the suite will generate a `<script_folder>/error_log/<model>/ts_<epoch_time_of_problematic_run>/error_log.txt` file containing all related info.
 
-###### Alpha Features:
+##### Alpha Features:
 Inside `main.py`, you will also find the alpha version of specific features, such as:
 - Neural Network layers activation localization (Pre-Alpha Version).
 - Plot Generation for execution times across devices, DL Frameworks, as well as comparisons of output predictions for DL Frameworks (Alpha Version).
