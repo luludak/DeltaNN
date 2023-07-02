@@ -116,7 +116,7 @@ class ModelLoader:
             path_postfix = pathlib.PurePath(path).name
             path = os.path.join(path, path_postfix + ".h5")
         keras_model = tf.keras.models.load_model(path)
-        keras_onnx_path = self.convert_keras_to_onnx(keras_model, data, path=path)
+        keras_onnx_path = self.convert_keras_to_onnx(keras_model, data)
         return self.load_onnx_model(keras_onnx_path, data, skip_inputs=True)
     
     def convert_keras_library_to_onnx(self, data):
@@ -164,8 +164,8 @@ class ModelLoader:
     # ------------ Converters ------------
 
     def convert_keras_to_onnx(self, model, data, path=None):
-        onnx_model = onnxmltools.convert_keras(model) 
-        output_path = data["dll_models_path"] + data["name"] + "_" + data["library"] + ".onnx" if path is None else path
+        onnx_model = onnxmltools.convert_keras(model, target_opset=11) 
+        output_path = data["dll_models_path"] + data["name"] + "_" + data["library"] + "_final.onnx" if path is None else path
         onnxmltools.utils.save_model(onnx_model, output_path)
         return output_path
 
@@ -183,7 +183,7 @@ class ModelLoader:
             dummy_element,       # model input (or a tuple for multiple inputs) 
             onnx_model_path,       # where to save the model  
             export_params = True,  # store the trained parameter weights inside the model file 
-            opset_version = data["opset_version"] if "opset_version" in data else 9,    # the ONNX version to export the model to 
+            opset_version = data["opset_version"] if "opset_version" in data else 11,    # the ONNX version to export the model to 
             do_constant_folding=True,  # whether to execute constant folding for optimization 
             input_names = ['inputs:0'],   # the model's input names 
             output_names = ['output'] # the model's output names 
@@ -345,7 +345,7 @@ class ModelLoader:
 
     def convert_tf_saved_model_to_onnx(self, path, data, export_path="model_to_onnx.onnx"):
 
-        command = 'python3 -m tf2onnx.convert --opset 9 --saved-model "' + path + '" --output "' + export_path + '"'
+        command = 'python3 -m tf2onnx.convert --opset 11 --saved-model "' + path + '" --output "' + export_path + '"'
         subp.check_call(command, shell=True)
         return export_path
 
@@ -356,7 +356,7 @@ class ModelLoader:
         di = data["input"]
 
         if("scalar_input" in data and data["scalar_input"]):
-            command = 'python3 -m tf2onnx.convert --opset 9 --graphdef "' + path + '" --inputs "' + \
+            command = 'python3 -m tf2onnx.convert --opset 11 --graphdef "' + path + '" --inputs "' + \
             data["input_name"] + '[' + str(di[0]) + ',' + str(di[1]) + ',' + str(di[2]) + ',' + str(di[3]) + ']" --outputs "' \
             + data["output_name"] + '" --output "' + onnx_model_path + '" --inputs-as-nchw "' + \
             str(di[0])  + ' ' + str(di[3])  + ' ' + str(di[2])   + ' ' + str(di[1]) + '"'
@@ -415,7 +415,7 @@ class ModelLoader:
 
         with tf_loader.tf_session(graph=tf_graph):
             g = process_tf_graph(tf_graph, input_names=input_names, 
-            output_names=output_names, extra_opset=extra_opset, opset=9)
+            output_names=output_names, extra_opset=extra_opset, opset=11)
             
         onnx_graph = optimize_graph(g)
         model_proto = onnx_graph.make_model("converted")
@@ -432,7 +432,7 @@ class ModelLoader:
         di = data["input"]
         try:
             input_format = "inputs" + ("-as-nchw" if invert_nchw_inputs else "")
-            command = 'python3 -m tf2onnx.convert --opset 9 --tflite "' + model_path + '" --output "' + onnx_model_path + '" --' + input_format + ' "' + data["input_name"] + '" --outputs "' + data["output_name"] + '"'
+            command = 'python3 -m tf2onnx.convert --opset 11 --tflite "' + model_path + '" --output "' + onnx_model_path + '" --' + input_format + ' "' + data["input_name"] + '" --outputs "' + data["output_name"] + '"'
             subp.check_call(command, shell=True)
         except subp.CalledProcessError as e:
             print("Error on command call.")
