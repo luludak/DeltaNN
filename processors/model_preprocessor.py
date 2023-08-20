@@ -51,7 +51,7 @@ class ModelPreprocessor:
             library_or_name = library_or_name.split("_to_")[0].split("_")
             library_or_name = library_or_name[len(library_or_name) - 1]
 
-        if (library_or_name.endswith("keras")):
+        if ("keras" in library_or_name):
             img_data = np.array(img_data)
             module_load = importlib.import_module(model_name)
 
@@ -68,7 +68,7 @@ class ModelPreprocessor:
 
             return img_data
 
-        elif(library_or_name.endswith("torch")):
+        elif("torch" in library_or_name):
 
             transform = transforms.Compose([
             transforms.Resize(256),
