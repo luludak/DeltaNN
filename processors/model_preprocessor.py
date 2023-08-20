@@ -30,7 +30,6 @@ class ModelPreprocessor:
     def __init__(self, data):
         self.data = data
 
-
     def preprocess(self, model_name, img_data, preprocessing_enabled):
 
         lower_model_name = model_name.lower()
