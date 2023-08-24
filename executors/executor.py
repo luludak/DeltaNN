@@ -12,6 +12,7 @@ import numpy as np
 from scipy.special import softmax
 from os import listdir
 from os.path import isfile, join
+import onnxruntime as ort
 
 from processors.model_preprocessor import ModelPreprocessor
 
