@@ -2,7 +2,7 @@
 
 DeltaNN is a comprehensive suite for compiling, optimizing, executing and analyzing pretrained DNNs under different computational environment settings.
 
-*This is the main project of the publication ["DeltaNN: Assessing the Impact of Computational Environment Parameters on the Performance of Image Recognition Models"](https://arxiv.org/abs/2306.06208), to be presented at IEEE ICSME 2023.
+*This is the project of the publication ["DeltaNN: Assessing the Impact of Computational Environment Parameters on the Performance of Image Recognition Models"](https://arxiv.org/abs/2306.06208), to be presented at IEEE ICSME 2023.
 Related results, data and supplementary material can be found [here](https://github.com/luludak/DeltaNN-Results).*
 
 In total, the framework supports:
@@ -27,7 +27,7 @@ In addition, the system requires a number of pip packages, which you can find in
 ## Instructions:
 
 1. Install Python and Pip on your system.
-- Python comes with linux distros usually, but this is not always the case for Pip. You can install it by running "sudo apt install python3-pip"
+- Python comes with linux distros usually, but this is not always the case for Pip. You can install it by running `sudo apt install python3-pip`.
 2. Download and install TVM:
 For instructions of how to install TVM, please refer to the [TVM related guide for developers](https://tvm.apache.org/docs/install/from_source.html#developers-get-source-from-github).
 Follow the installation from source instructions, and consider enabling the LLVM and the OPENCL flags.
