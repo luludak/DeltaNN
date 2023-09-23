@@ -1,8 +1,9 @@
 # DeltaNN
 
 DeltaNN is a comprehensive suite for compiling, optimizing, executing and analyzing pretrained DNNs under different computational environment settings.
-This is the main project of the publication ["DeltaNN: Assessing the Impact of Computational Environment Parameters on the Performance of Image Recognition Models"](https://arxiv.org/abs/2306.06208).
-Related results, data and supplementary material can be found [here](https://github.com/luludak/DeltaNN-Results).
+
+*This is the main project of the publication ["DeltaNN: Assessing the Impact of Computational Environment Parameters on the Performance of Image Recognition Models"](https://arxiv.org/abs/2306.06208), to be presented at IEEE ICSME 2023.
+Related results, data and supplementary material can be found [here](https://github.com/luludak/DeltaNN-Results).*
 
 In total, the framework supports:
 
