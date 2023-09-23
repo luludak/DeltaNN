@@ -6,7 +6,6 @@ DeltaNN is a comprehensive suite for compiling, optimizing, executing and analyz
 Related results, data and supplementary material can be found [here](https://github.com/luludak/DeltaNN-Results).*
 
 In total, the framework supports:
-
 - Build of Neural Networks using different backend DL Frameworks.
 - Build of DNNs under different optimization settings.
 - Build of DNNs using different GPU backends (CUDA, OpenCL, etc).
