@@ -168,3 +168,7 @@ Markdown                         1             41              0            113
 SUM:                            15            746            249           2972
 -------------------------------------------------------------------------------
 ```
+
+## Notes
+Any sample dataset images provided in the repository are sourced from the internet, and their copyright(s) belong to their owner(s). The only reason of provision is purely for non-commercial, demonstration purposes of DiTOX (to showcase how it works), with respect to the copyright(s) of their owner(s) and no intention to infringe them.
+
