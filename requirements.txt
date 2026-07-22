@@ -22,6 +22,6 @@ seaborn==0.11.2
 tensorflow==2.8.0
 tf2onnx==1.9.3
 tflite2onnx==0.4.0
-torch==1.11.0
+torch==2.13.0
 torchvision==0.12.0
 tvm==1.0.0
