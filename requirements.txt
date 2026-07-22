@@ -4,7 +4,7 @@ keras_nightly==2.5.0.dev2021032900
 matplotlib==3.4.3
 mxnet==2.0.0a0
 numpy==1.22.3
-onnx==1.11.0
+onnx==1.22.0
 onnx2keras==0.0.24
 onnx2torch==1.5.4
 onnx_tf==1.10.0
